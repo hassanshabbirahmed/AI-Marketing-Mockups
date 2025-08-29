@@ -12,6 +12,10 @@ const SCENES = [
   { id: 'tshirt', name: 'T-Shirt', prompt: 'Print this image on the front of a white t-shirt worn by a model in a fashion photoshoot setting.' },
   { id: 'mug', name: 'Coffee Mug', prompt: 'Put this image on a ceramic coffee mug sitting on a wooden table in a cozy cafe.' },
   { id: 'laptop', name: 'Laptop Screen', prompt: 'Show this image as the wallpaper on a modern laptop screen, placed on a desk in a home office.' },
+  { id: 'magazine', name: 'Magazine Cover', prompt: 'Feature this image as the cover of a high-fashion magazine. Add a title like "VOGUE" or "STYLE" at the top, with some headline text overlaying the image in a stylish, modern font. Ensure the lighting looks professional and glossy.' },
+  { id: 'packaging', name: 'Product Packaging', prompt: 'Place this image onto a 3D product box for a luxury item, like perfume or a tech gadget. The box should be sitting on a clean, reflective surface with soft, studio lighting. The image should look like it is printed on high-quality matte-finish cardboard.' },
+  { id: 'banner', name: 'Digital Ad Banner', prompt: 'Display this image within a sleek digital ad banner on a popular tech news website. The banner should be in a 728x90 leaderboard format, and the surrounding website content should be slightly blurred to draw focus. The image should look crisp and vibrant as if on a high-resolution screen.' },
+  { id: 'social_post', name: 'Social Media Post', prompt: 'Show this image as part of a professionally designed Instagram post. The image should be in a square frame, viewed on a smartphone held by a person in a bright, casual setting like a cafe. Include a fake username, likes count, and a short caption below the image.' }
 ];
 
 const App = () => {
@@ -97,6 +101,18 @@ const App = () => {
     }
   }, [uploadedImage, selectedScene]);
 
+  const handleDownloadClick = useCallback(() => {
+    if (!generatedImage) return;
+    const link = document.createElement('a');
+    link.href = generatedImage;
+    const mimeType = generatedImage.match(/data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+).*,.*/)?.[1];
+    const extension = mimeType ? mimeType.split('/')[1] : 'png';
+    link.download = `marketing-mockup.${extension}`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }, [generatedImage]);
+
   return html`
     <div class="app-container">
       <aside class="controls-panel">
@@ -161,7 +177,12 @@ const App = () => {
           ${isLoading && html`<div class="skeleton-loader"></div>`}
           ${!isLoading && error && html`<p class="error-message">${error}</p>`}
           ${!isLoading && !error && generatedImage && html`
-            <img class="result-image" src=${generatedImage} alt="Generated marketing mockup" />
+            <div class="result-content">
+              <img class="result-image" src=${generatedImage} alt="Generated marketing mockup" />
+              <button class="download-button" onClick=${handleDownloadClick}>
+                Download Mockup
+              </button>
+            </div>
           `}
           ${!isLoading && !error && !generatedImage && html`
             <div class="result-placeholder">
