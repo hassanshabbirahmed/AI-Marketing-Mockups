@@ -18,9 +18,12 @@ const SCENES = [
   { id: 'social_post', name: 'Social Media Post', prompt: 'Show this image as part of a professionally designed Instagram post. The image should be in a square frame, viewed on a smartphone held by a person in a bright, casual setting like a cafe. Include a fake username, likes count, and a short caption below the image. The image on the phone screen should have a brightness and color balance that looks natural for a screen viewed in a bright, casual setting.' }
 ];
 
+const CUSTOM_SCENE = { id: 'custom', name: 'Custom Scene' };
+
 const App = () => {
   const [uploadedImage, setUploadedImage] = useState(null);
   const [selectedScene, setSelectedScene] = useState(null);
+  const [customScenePrompt, setCustomScenePrompt] = useState('');
   const [generatedImage, setGeneratedImage] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -58,7 +61,8 @@ const App = () => {
   };
 
   const handleGenerateClick = useCallback(async () => {
-    if (!uploadedImage || !selectedScene) return;
+    const prompt = selectedScene?.id === 'custom' ? customScenePrompt : selectedScene?.prompt;
+    if (!uploadedImage || !prompt) return;
 
     setIsLoading(true);
     setError(null);
@@ -70,15 +74,15 @@ const App = () => {
       const base64ImageData = uploadedImage.dataUrl.split(',')[1];
 
       const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-image-preview',
+        model: 'gemini-2.5-flash-image',
         contents: {
           parts: [
             { inlineData: { data: base64ImageData, mimeType: mimeType } },
-            { text: selectedScene.prompt },
+            { text: prompt },
           ],
         },
         config: {
-          responseModalities: [Modality.IMAGE, Modality.TEXT],
+          responseModalities: [Modality.IMAGE],
         },
       });
 
@@ -89,9 +93,7 @@ const App = () => {
         const imageUrl = `data:${imagePart.inlineData.mimeType};base64,${base64ImageBytes}`;
         setGeneratedImage(imageUrl);
       } else {
-        const textPart = response.candidates?.[0]?.content?.parts?.find(part => part.text);
-        const errorMessage = textPart?.text || "The model did not return an image. Please try a different image or scene.";
-        setError(errorMessage);
+        setError("The model did not return an image. This might be due to the prompt or safety policies. Please try a different image or scene.");
       }
     } catch (e) {
       console.error(e);
@@ -99,7 +101,7 @@ const App = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [uploadedImage, selectedScene]);
+  }, [uploadedImage, selectedScene, customScenePrompt]);
 
   const handleDownloadClick = useCallback(() => {
     if (!generatedImage) return;
@@ -112,6 +114,8 @@ const App = () => {
     link.click();
     document.body.removeChild(link);
   }, [generatedImage]);
+  
+  const isGenerateDisabled = !uploadedImage || !selectedScene || isLoading || (selectedScene.id === 'custom' && !customScenePrompt.trim());
 
   return html`
     <div class="app-container">
@@ -159,14 +163,33 @@ const App = () => {
                 ${scene.name}
               </button>
             `)}
+             <button
+              key=${CUSTOM_SCENE.id}
+              class=${`scene-card ${selectedScene?.id === CUSTOM_SCENE.id ? 'selected' : ''}`}
+              onClick=${() => setSelectedScene(CUSTOM_SCENE)}
+              aria-pressed=${selectedScene?.id === CUSTOM_SCENE.id}
+            >
+              ${CUSTOM_SCENE.name}
+            </button>
           </div>
+           ${selectedScene?.id === 'custom' && html`
+            <div class="custom-scene-input">
+              <textarea
+                placeholder="Describe the scene for your mockup..."
+                value=${customScenePrompt}
+                onInput=${(e) => setCustomScenePrompt(e.target.value)}
+                rows="4"
+                aria-label="Custom scene description"
+              ></textarea>
+            </div>
+          `}
         </section>
 
         <button 
           class="generate-button" 
           onClick=${handleGenerateClick} 
-          disabled=${!uploadedImage || !selectedScene || isLoading}
-          aria-disabled=${!uploadedImage || !selectedScene || isLoading}
+          disabled=${isGenerateDisabled}
+          aria-disabled=${isGenerateDisabled}
         >
           ${isLoading ? 'Generating...' : 'Generate Mockup'}
         </button>

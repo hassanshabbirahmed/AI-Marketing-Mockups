@@ -147,6 +147,34 @@ html, body {
   background-color: rgba(0, 123, 255, 0.1);
 }
 
+.custom-scene-input {
+  margin-top: 16px;
+}
+
+.custom-scene-input textarea {
+  width: 100%;
+  background-color: #2a2a2a;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: 12px;
+  color: var(--text-color);
+  font-family: var(--font-family);
+  font-size: 14px;
+  resize: vertical;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.custom-scene-input textarea::placeholder {
+  color: var(--text-color-light);
+  opacity: 0.7;
+}
+
+.custom-scene-input textarea:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
+}
+
 /* Generate Button */
 .generate-button {
   background-color: var(--accent-color);
